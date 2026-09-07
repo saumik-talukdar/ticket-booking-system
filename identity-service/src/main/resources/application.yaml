@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: identity-service
+
+  datasource:
+    url: ${IDENTITY_DB_URL}
+    username: ${IDENTITY_DB_USER}
+    password: ${IDENTITY_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+
+    show-sql: ${JPA_SHOW_SQL:true}
+
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: ${IDENTITY_SERVICE_PORT:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+  endpoint:
+    health:
+      show-details: always

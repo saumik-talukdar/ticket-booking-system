@@ -1,0 +1,76 @@
+services:
+
+  # =================================
+  # PostgreSQL
+  # =================================
+
+  postgres:
+
+    image: postgres:18-alpine
+
+    container_name: ticket-postgres
+
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+
+      POSTGRES_USER: ${POSTGRES_USER}
+
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+
+      - "${POSTGRES_PORT}:5432"
+
+    volumes:
+
+      # Persistent database data
+      - postgres-data:/var/lib/postgresql
+
+      # Initialization scripts
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
+
+    networks:
+
+      - ticket-network
+
+    healthcheck:
+
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER}"
+        ]
+
+      interval: 10s
+
+      timeout: 5s
+
+      retries: 5
+
+
+# =================================
+# Networks
+# =================================
+
+networks:
+
+  ticket-network:
+
+    name: ticket-network
+
+    driver: bridge
+
+
+# =================================
+# Volumes
+# =================================
+
+volumes:
+
+  postgres-data:
+
+    name: ticket-postgres-data

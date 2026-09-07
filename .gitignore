@@ -1,0 +1,18 @@
+# Environment
+.env
+
+# Build
+**/target/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+
+# Logs
+*.log

@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: event-service
+
+  datasource:
+    url: ${EVENT_DB_URL}
+    username: ${EVENT_DB_USER}
+    password: ${EVENT_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+
+    show-sql: ${JPA_SHOW_SQL:true}
+
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: ${EVENT_SERVICE_PORT:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+  endpoint:
+    health:
+      show-details: always
