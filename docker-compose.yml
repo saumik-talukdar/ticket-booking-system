@@ -27,10 +27,8 @@ services:
 
     volumes:
 
-      # Persistent database data
       - postgres-data:/var/lib/postgresql
 
-      # Initialization scripts
       - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
 
     networks:
@@ -50,6 +48,76 @@ services:
       timeout: 5s
 
       retries: 5
+
+
+  # =================================
+  # Event Service
+  # =================================
+
+  event-service:
+
+    build:
+      context: ./event-service
+      dockerfile: Dockerfile
+
+    container_name: ticket-event-service
+
+    restart: unless-stopped
+
+    environment:
+
+      EVENT_DB_URL: jdbc:postgresql://postgres:5432/event_db
+
+      EVENT_DB_USER: ${EVENT_DB_USER}
+
+      EVENT_DB_PASSWORD: ${EVENT_DB_PASSWORD}
+
+      EVENT_SERVICE_PORT: 8082
+
+    depends_on:
+
+      postgres:
+        condition: service_healthy
+
+    ports:
+
+      - "8082:8082"
+
+    networks:
+
+      - ticket-network
+
+
+  # =================================
+  # API Gateway
+  # =================================
+
+  api-gateway:
+
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+
+    container_name: ticket-api-gateway
+
+    restart: unless-stopped
+
+    environment:
+
+      API_GATEWAY_PORT: 8080
+
+    depends_on:
+
+      event-service:
+        condition: service_started
+
+    ports:
+
+      - "8080:8080"
+
+    networks:
+
+      - ticket-network
 
 
 # =================================
