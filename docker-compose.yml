@@ -1,54 +1,93 @@
 services:
 
+  redis:
+    image: redis:8-alpine
+    container_name: ticket-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ticket-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # =================================
   # PostgreSQL
   # =================================
 
   postgres:
-
     image: postgres:18-alpine
-
     container_name: ticket-postgres
-
     restart: unless-stopped
-
     env_file:
       - .env
-
     environment:
-
       POSTGRES_USER: ${POSTGRES_USER}
-
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
     ports:
-
       - "${POSTGRES_PORT}:5432"
 
     volumes:
-
       - postgres-data:/var/lib/postgresql
-
       - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
 
     networks:
-
       - ticket-network
 
     healthcheck:
-
       test:
         [
           "CMD-SHELL",
           "pg_isready -U ${POSTGRES_USER}"
         ]
-
       interval: 10s
-
       timeout: 5s
-
       retries: 5
 
+  # =================================
+  # Identity Service
+  # =================================
+
+  identity-service:
+
+    build:
+      context: ./identity-service
+      dockerfile: Dockerfile
+
+    container_name: ticket-identity-service
+    restart: unless-stopped
+
+    environment:
+      IDENTITY_DB_URL: jdbc:postgresql://postgres:5432/identity_db
+      IDENTITY_DB_USER: ${IDENTITY_DB_USER}
+      IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD}
+      IDENTITY_SERVICE_PORT: ${IDENTITY_SERVICE_PORT}
+      JWT_PRIVATE_KEY_PATH: /app/keys/private.pem
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: "6379"
+
+    volumes:
+      - ./infrastructure/keys/private.pem:/app/keys/private.pem:ro
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    expose:
+      - "8081"
+
+    networks:
+      - ticket-network
 
   # =================================
   # Event Service
@@ -61,30 +100,22 @@ services:
       dockerfile: Dockerfile
 
     container_name: ticket-event-service
-
     restart: unless-stopped
 
     environment:
-
       EVENT_DB_URL: jdbc:postgresql://postgres:5432/event_db
-
       EVENT_DB_USER: ${EVENT_DB_USER}
-
       EVENT_DB_PASSWORD: ${EVENT_DB_PASSWORD}
-
-      EVENT_SERVICE_PORT: 8082
+      EVENT_SERVICE_PORT: ${EVENT_SERVICE_PORT}
 
     depends_on:
-
       postgres:
         condition: service_healthy
 
-    ports:
-
-      - "8082:8082"
+    expose:
+      - "8082"
 
     networks:
-
       - ticket-network
 
 
@@ -99,24 +130,25 @@ services:
       dockerfile: Dockerfile
 
     container_name: ticket-api-gateway
-
     restart: unless-stopped
 
     environment:
+      API_GATEWAY_PORT: ${API_GATEWAY_PORT}
+      JWT_PUBLIC_KEY_PATH: /app/keys/public.pem
 
-      API_GATEWAY_PORT: 8080
+    volumes:
+      - ./infrastructure/keys/public.pem:/app/keys/public.pem:ro
 
     depends_on:
-
+      identity-service:
+        condition: service_started
       event-service:
         condition: service_started
 
     ports:
-
       - "8080:8080"
 
     networks:
-
       - ticket-network
 
 
@@ -125,11 +157,8 @@ services:
 # =================================
 
 networks:
-
   ticket-network:
-
     name: ticket-network
-
     driver: bridge
 
 
@@ -140,5 +169,7 @@ networks:
 volumes:
 
   postgres-data:
-
     name: ticket-postgres-data
+
+  redis-data:
+    name: ticket-redis-data

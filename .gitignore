@@ -1,6 +1,10 @@
 # Environment
 .env
 
+# RSA keys
+infrastructure/keys/private.pem
+infrastructure/keys/public.pem
+
 # Build
 **/target/
 

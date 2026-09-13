@@ -5,7 +5,7 @@ spring:
   cloud:
     gateway:
       server:
-        webmvc:
+        webflux:
           routes:
 
             - id: identity-service
@@ -38,6 +38,9 @@ spring:
 
 server:
   port: ${API_GATEWAY_PORT:8080}
+
+jwt:
+  public-key-path: ${JWT_PUBLIC_KEY_PATH:../infrastructure/keys/public.pem}
 
 management:
   endpoints:
