@@ -31,8 +31,7 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(UUID userId, ChangePasswordRequest request
-    ) {
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
 
         User user = getUserOrThrow(userId);
 
@@ -52,9 +51,9 @@ public class UserService {
     }
 
 
-    public void logout(String refreshToken) {
+    public void logout(UUID userId, String refreshToken) {
 
-        refreshTokenService.revokeRefreshToken(refreshToken);
+        refreshTokenService.revokeRefreshToken(userId, refreshToken);
     }
 
 

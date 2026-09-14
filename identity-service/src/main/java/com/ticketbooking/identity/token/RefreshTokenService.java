@@ -1,5 +1,6 @@
 package com.ticketbooking.identity.token;
 
+import com.ticketbooking.identity.exception.InvalidCredentialsException;
 import com.ticketbooking.identity.exception.InvalidRefreshTokenException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -119,7 +120,7 @@ public class RefreshTokenService {
         );
     }
 
-    public void revokeRefreshToken(String refreshToken) {
+    public void revokeRefreshToken(UUID userId, String refreshToken) {
 
         String tokenHash = hashToken(refreshToken);
 
@@ -129,17 +130,23 @@ public class RefreshTokenService {
 
         redisTemplate.delete(tokenKey);
 
-        if (userIdStr != null) {
-
-            UUID userId = UUID.fromString(userIdStr);
-
-            String userKey = buildUserKey(userId);
-
-            redisTemplate.opsForSet().remove(
-                    userKey,
-                    tokenHash
-            );
+        if (userIdStr == null) {
+            return;
         }
+
+        UUID tokenUserId = UUID.fromString(userIdStr);
+
+        if (!tokenUserId.equals(userId)) {
+
+            throw new InvalidCredentialsException("Invalid refresh token");
+        }
+
+        String userKey = buildUserKey(tokenUserId);
+
+        redisTemplate.opsForSet().remove(
+                userKey,
+                tokenHash
+        );
     }
 
     public void revokeAllRefreshTokens(UUID userId) {
