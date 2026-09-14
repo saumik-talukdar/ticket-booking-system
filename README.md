@@ -1,6 +1,6 @@
-# Ticket Booking Platform
+# Ticket Booking System
 
-A microservice-based ticket booking platform built to explore backend architecture, distributed systems, security, containerization, and service communication using the Java and Spring ecosystem.
+A microservice-based ticket booking system built to explore backend architecture, distributed systems, security, containerization, and service communication using the Java and Spring ecosystem.
 
 > **Project Status:** 🚧 In Active Development
 
